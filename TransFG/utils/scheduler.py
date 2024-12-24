@@ -1,7 +1,8 @@
 import logging
 import math
 
-from torch.optim.lr_scheduler import LambdaLR
+# from torch.optim.lr_scheduler import LambdaLR
+from jittor.optim import LambdaLR
 
 logger = logging.getLogger(__name__)
 
