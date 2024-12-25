@@ -464,7 +464,7 @@ class VisionTransformer(nn.Module):
         # with torch.no_grad():
         with jittor.no_grad():
             # self.transformer.embeddings.patch_embeddings.weight.copy(np2th(weights["embedding/kernel"], conv=True))
-            self.transformer.embeddings.patch_embeddings.weight = jittor.copy(np2th(weights["embedding/bias"]))
+            self.transformer.embeddings.patch_embeddings.weight = jittor.copy(np2th(weights["embedding/kernel"], conv=True))
             # self.transformer.embeddings.patch_embeddings.bias.copy(np2th(weights["embedding/bias"]))
             self.transformer.embeddings.patch_embeddings.bias = jittor.copy(np2th(weights["embedding/bias"]))
             # self.transformer.embeddings.cls_token.copy(np2th(weights["cls"]))
