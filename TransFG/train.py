@@ -93,6 +93,8 @@ def setup(args):
         pretrained_model = jt.load(args.pretrained_model)['model']
         model.load_state_dict(pretrained_model)
     # model.to(args.device)
+    for p in model.parameters():
+        p.requires_grad = True
     num_params = count_parameters(model)
 
     logger.info("{}".format(config))
