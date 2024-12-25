@@ -352,7 +352,7 @@ class Part_Attention(nn.Module):
             last_map = jittor.nn.matmul(x[i], last_map)
         last_map = last_map[:,:,0,1:]
 
-        _, max_inx = last_map.max(2)
+        _, max_inx = last_map.argmax(2)
         return _, max_inx
 
 class Encoder(nn.Module):
@@ -395,7 +395,7 @@ class Encoder(nn.Module):
         B, num = part_inx.shape
         for i in range(B):
             parts.append(hidden_states[i, part_inx[i,:]])
-        parts = jittor.stack(parts).squeeze(1)
+        parts = jittor.squeeze(jittor.stack(parts), 1)
         concat = jittor.concat((hidden_states[:,0].unsqueeze(1), parts), dim=1)
         part_states, part_weights = self.part_layer(concat)
         part_encoded = self.part_norm(part_states)   
