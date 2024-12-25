@@ -146,7 +146,7 @@ def valid(args, model, test_loader, global_step):
             eval_losses.update(eval_loss.item())
 
             # preds = torch.argmax(logits, dim=-1)
-            preds = jt.argmax(logits, dim=-1)
+            _, preds = jt.argmax(logits, dim=-1)
 
         if len(all_preds) == 0:
             all_preds.append(preds.detach().cpu().numpy())
@@ -247,7 +247,7 @@ def train(args, model):
             loss = loss.mean()
 
             # preds = torch.argmax(logits, dim=-1)
-            preds = jt.argmax(logits, dim=-1)
+            _, preds = jt.argmax(logits, dim=-1)
 
             if len(all_preds) == 0:
                 all_preds.append(preds.detach().cpu().numpy())
@@ -266,7 +266,7 @@ def train(args, model):
                 with amp.scale_loss(loss, optimizer) as scaled_loss:
                     scaled_loss.backward()
             else:
-                loss.backward()
+                optimizer.backward(loss)
 
             if (step + 1) % args.gradient_accumulation_steps == 0:
                 losses.update(loss.item()*args.gradient_accumulation_steps)

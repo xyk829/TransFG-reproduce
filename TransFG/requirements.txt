@@ -1,5 +1,5 @@
-torch==1.5.1
-torchvision==0.6.1
+torch==2.1.0
+torchvision==0.16.0
 numpy
 tqdm
 tensorboard
@@ -7,3 +7,4 @@ ml-collections
 matplotlib
 imageio
 scipy
+jittor

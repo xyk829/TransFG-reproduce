@@ -395,7 +395,9 @@ class Encoder(nn.Module):
         B, num = part_inx.shape
         for i in range(B):
             parts.append(hidden_states[i, part_inx[i,:]])
-        parts = jittor.squeeze(jittor.stack(parts), 1)
+        parts = jittor.stack(parts)
+        if parts.shape[1] == 1:
+            parts = jittor.squeeze(parts, 1)
         concat = jittor.concat((hidden_states[:,0].unsqueeze(1), parts), dim=1)
         part_states, part_weights = self.part_layer(concat)
         part_encoded = self.part_norm(part_states)   
@@ -525,7 +527,7 @@ def con_loss(features, labels):
     B, _ = features.shape
     # features = F.normalize(features)
     features = jittor.normalize(features)
-    cos_matrix = features.mm(features.t())
+    cos_matrix = jittor.matmul(features, features.t())
     # pos_label_matrix = torch.stack([labels == labels[i] for i in range(B)]).float()
     pos_label_matrix = jittor.stack([labels == labels[i] for i in range(B)]).float()
     neg_label_matrix = 1 - pos_label_matrix
