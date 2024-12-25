@@ -352,7 +352,7 @@ class Part_Attention(nn.Module):
             last_map = jittor.nn.matmul(x[i], last_map)
         last_map = last_map[:,:,0,1:]
 
-        _, max_inx = last_map.argmax(2)
+        max_inx, _ = last_map.argmax(2)
         return _, max_inx
 
 class Encoder(nn.Module):

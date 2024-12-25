@@ -8,3 +8,4 @@ matplotlib
 imageio
 scipy
 jittor
+pandas
