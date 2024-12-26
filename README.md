@@ -2,7 +2,7 @@
 
 ## 介绍
 
-我们使用 [Jittor 框架]([Jittor/jittor: Jittor is a high-performance deep learning framework based on JIT compiling and meta-operators.](https://github.com/Jittor/jittor)) 复现了基于 torch 的 [TransFG]([TACJu/TransFG: This is the official PyTorch implementation of the paper "TransFG: A Transformer Architecture for Fine-grained Recognition" (Ju He, Jie-Neng Chen, Shuai Liu, Adam Kortylewski, Cheng Yang, Yutong Bai, Changhu Wang, Alan Yuille).](https://github.com/TACJu/TransFG)) 项目，在数据集 [CUB-200-2011](https://www.vision.caltech.edu/datasets/cub_200_2011/) 和 [Stanford Dogs](http://vision.stanford.edu/aditya86/ImageNetDogs/) 上进行了测试，并针对 Patch Split 和 Contrastive Loss 进行了消融实验。
+我们使用 [Jittor 框架]([Jittor/jittor: Jittor is a high-performance deep learning framework based on JIT compiling and meta-operators.](https://github.com/Jittor/jittor)) 复现了基于 [Torch](https://github.com/pytorch/pytorch) 的 [TransFG]([TACJu/TransFG: This is the official PyTorch implementation of the paper "TransFG: A Transformer Architecture for Fine-grained Recognition" (Ju He, Jie-Neng Chen, Shuai Liu, Adam Kortylewski, Cheng Yang, Yutong Bai, Changhu Wang, Alan Yuille).](https://github.com/TACJu/TransFG)) 项目，在数据集 [CUB-200-2011](https://www.vision.caltech.edu/datasets/cub_200_2011/) 和 [Stanford Dogs](http://vision.stanford.edu/aditya86/ImageNetDogs/) 上进行了测试，并针对 Patch Split，Contrastive Loss 和 Alpha 进行了消融实验。
 
 ## 使用
 
@@ -35,17 +35,17 @@
 | ------------- | ------ |
 | CUB + Torch   | 91.7%  |
 | Dogs + Torch  | 92.3%  |
-| CUB + Jittor  | 90.2%  |
+| CUB + Jittor  | 91.0%  |
 | Dogs + Jittor | 89.0%  |
 
-### Overlap
+### Patch Split
 
-| Patch Split 与框架   | 准确率 |
-| -------------------- | ------ |
-| Non-Overlap + Torch  | 91.5%  |
-| Overlap + Torch      | 91.7%  |
-| Non-overlap + Jittor | 90.2%  |
-| Overlap + Jittor     | 91.0%  |
+| Patch Split 与框架   | 准确率 | 训练时间 |
+| -------------------- | ------ | -------- |
+| Non-Overlap + Torch  | 91.5%  | 1.98h    |
+| Overlap + Torch      | 91.7%  | 5.38h    |
+| Non-overlap + Jittor | 90.2%  | 0.48h    |
+| Overlap + Jittor     | 91.0%  | 1.00h    |
 
 ### Contrastive Loss
 
