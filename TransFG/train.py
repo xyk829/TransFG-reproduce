@@ -85,7 +85,8 @@ def setup(args):
     elif args.dataset == "INat2017":
         num_classes = 5089
 
-    model = VisionTransformer(config, args.img_size, zero_head=True, num_classes=num_classes,                                                   smoothing_value=args.smoothing_value)
+    model = VisionTransformer(config, args.img_size, zero_head=True, num_classes=num_classes, 
+                            smoothing_value=args.smoothing_value, alpha=args.alpha)
 
     model.load_from(np.load(args.pretrained_dir))
     if args.pretrained_model is not None:
@@ -237,14 +238,19 @@ def train(args, model):
                               dynamic_ncols=True,
                               disable=args.local_rank not in [-1, 0])
         all_preds, all_label = [], []
+        loss_fct = jt.nn.CrossEntropyLoss()
         for step, batch in enumerate(epoch_iterator):
             # batch = tuple(t.to(args.device) for t in batch)
             batch = tuple(t for t in batch)
             x, y = batch
 
-            # loss, logits = model(x, y)
-            loss, logits = model(x, y)
-            loss = loss.mean()
+            if args.loss == 'contrastive-loss':
+                loss, logits = model(x, y)
+                loss = loss.mean()
+            elif args.loss == 'cross-entropy-loss':
+                logits = model(x)
+                loss = loss_fct(logits, y)
+                loss = loss.mean()
 
             # preds = torch.argmax(logits, dim=-1)
             preds, _ = jt.argmax(logits, dim=-1)
@@ -381,6 +387,10 @@ def main():
                         help="Split method")
     parser.add_argument('--slide_step', type=int, default=12,
                         help="Slide step for overlap split")
+    parser.add_argument('--loss', type=str, default='contrastive-loss',
+                        help="loss function")
+    parser.add_argument('--alpha', type=float, default=0.4,
+                        help="set alpha for contrastive loss")
 
     args = parser.parse_args()
 

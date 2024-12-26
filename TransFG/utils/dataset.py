@@ -84,7 +84,7 @@ class CarsDataset(dataset.Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-
+        super().__init__()
         self.full_data_set = io.loadmat(mat_anno)
         self.car_annotations = self.full_data_set['annotations']
         self.car_annotations = self.car_annotations[0]

@@ -421,7 +421,7 @@ class Transformer(nn.Module):
         return part_encoded
 
 class VisionTransformer(nn.Module):
-    def __init__(self, config, img_size=224, num_classes=21843, smoothing_value=0, zero_head=False):
+    def __init__(self, config, img_size=224, num_classes=21843, smoothing_value=0, zero_head=False, alpha=0.4):
         super(VisionTransformer, self).__init__()
         self.num_classes = num_classes
         self.smoothing_value = smoothing_value
@@ -429,6 +429,7 @@ class VisionTransformer(nn.Module):
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size)
         self.part_head = Linear(config.hidden_size, num_classes)
+        self.alpha = alpha
 
     # def forward(self, x, labels=None):
     #     part_tokens = self.transformer(x)
@@ -456,7 +457,7 @@ class VisionTransformer(nn.Module):
             else:
                 loss_fct = LabelSmoothing(self.smoothing_value)
             part_loss = loss_fct(part_logits.view(-1, self.num_classes), labels.view(-1))
-            contrast_loss = con_loss(part_tokens[:, 0], labels.view(-1))
+            contrast_loss = con_loss(part_tokens[:, 0], labels.view(-1), self.alpha)
             loss = part_loss + contrast_loss
             return loss, part_logits
         else:
@@ -523,7 +524,7 @@ class VisionTransformer(nn.Module):
                     for uname, unit in block.named_children():
                         unit.load_from(weights, n_block=bname, n_unit=uname)
 
-def con_loss(features, labels):
+def con_loss(features, labels, alpha=0.4):
     B, _ = features.shape
     # features = F.normalize(features)
     features = jittor.normalize(features)
@@ -532,7 +533,7 @@ def con_loss(features, labels):
     pos_label_matrix = jittor.stack([labels == labels[i] for i in range(B)]).float()
     neg_label_matrix = 1 - pos_label_matrix
     pos_cos_matrix = 1 - cos_matrix
-    neg_cos_matrix = cos_matrix - 0.4
+    neg_cos_matrix = cos_matrix - alpha
     neg_cos_matrix[neg_cos_matrix < 0] = 0
     loss = (pos_cos_matrix * pos_label_matrix).sum() + (neg_cos_matrix * neg_label_matrix).sum()
     loss /= (B * B)

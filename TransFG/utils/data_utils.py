@@ -42,7 +42,7 @@ def get_loader(args):
                                     transforms.RandomHorizontalFlip(),
                                     AutoAugImageNetPolicy(),
                                     transforms.ToTensor(),
-                                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+                                    transforms.ImageNormalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
                             )
         testset = CarsDataset(os.path.join(args.data_root,'cars_test_annos_withlabels.mat'),
                             os.path.join(args.data_root,'cars_test'),
@@ -52,18 +52,18 @@ def get_loader(args):
                                     transforms.Resize((600, 600), Image.BILINEAR),
                                     transforms.CenterCrop((448, 448)),
                                     transforms.ToTensor(),
-                                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+                                    transforms.ImageNormalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
                             )
     elif args.dataset == 'dog':
         train_transform=transforms.Compose([transforms.Resize((600, 600), Image.BILINEAR),
                                     transforms.RandomCrop((448, 448)),
                                     transforms.RandomHorizontalFlip(),
                                     transforms.ToTensor(),
-                                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+                                    transforms.ImageNormalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
         test_transform=transforms.Compose([transforms.Resize((600, 600), Image.BILINEAR),
                                     transforms.CenterCrop((448, 448)),
                                     transforms.ToTensor(),
-                                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+                                    transforms.ImageNormalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
         trainset = dogs(root=args.data_root,
                                 train=True,
                                 cropped=False,
@@ -81,11 +81,11 @@ def get_loader(args):
                                         transforms.RandomCrop((448, 448)),
                                         transforms.RandomHorizontalFlip(),
                                         transforms.ToTensor(),
-                                        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+                                        transforms.ImageNormalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
         test_transform=transforms.Compose([transforms.Resize((600, 600), Image.BILINEAR),
                                         transforms.CenterCrop((448, 448)),
                                         transforms.ToTensor(),
-                                        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+                                        transforms.ImageNormalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
         trainset = NABirds(root=args.data_root, train=True, transform=train_transform)
         testset = NABirds(root=args.data_root, train=False, transform=test_transform)
     elif args.dataset == 'INat2017':
@@ -94,11 +94,11 @@ def get_loader(args):
                                     transforms.RandomHorizontalFlip(),
                                     AutoAugImageNetPolicy(),
                                     transforms.ToTensor(),
-                                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+                                    transforms.ImageNormalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
         test_transform=transforms.Compose([transforms.Resize((400, 400), Image.BILINEAR),
                                     transforms.CenterCrop((304, 304)),
                                     transforms.ToTensor(),
-                                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+                                    transforms.ImageNormalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
         trainset = INat2017(args.data_root, 'train', train_transform)
         testset = INat2017(args.data_root, 'val', test_transform)
 
