@@ -74,349 +74,350 @@ class CUB(dataset.Dataset):
         else:
             return len(self.test_label)
 
-class CarsDataset(dataset.Dataset):
+# class CarsDataset(dataset.Dataset):
 
-    def __init__(self, mat_anno, data_dir, car_names, cleaned=None, transform=None):
-        """
-        Args:
-            mat_anno (string): Path to the MATLAB annotation file.
-            data_dir (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
-        """
-        super().__init__()
-        self.full_data_set = io.loadmat(mat_anno)
-        self.car_annotations = self.full_data_set['annotations']
-        self.car_annotations = self.car_annotations[0]
-
-        if cleaned is not None:
-            cleaned_annos = []
-            print("Cleaning up data set (only take pics with rgb chans)...")
-            clean_files = np.loadtxt(cleaned, dtype=str)
-            for c in self.car_annotations:
-                if c[-1][0] in clean_files:
-                    cleaned_annos.append(c)
-            self.car_annotations = cleaned_annos
-
-        self.car_names = scipy.io.loadmat(car_names)['class_names']
-        self.car_names = np.array(self.car_names[0])
-
-        self.data_dir = data_dir
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.car_annotations)
-
-    def __getitem__(self, idx):
-        img_name = os.path.join(self.data_dir, self.car_annotations[idx][-1][0])
-        image = Image.open(img_name).convert('RGB')
-        car_class = self.car_annotations[idx][-2][0][0]
-        # car_class = torch.from_numpy(np.array(car_class.astype(np.float32))).long() - 1
-        car_class = jittor.array(np.array(car_class.astype(np.float32))).long() - 1
-        assert car_class < 196
-        
-        if self.transform:
-            image = self.transform(image)
-
-        # return image, car_class, img_name
-        return image, car_class
-
-    def map_class(self, id):
-        id = np.ravel(id)
-        ret = self.car_names[id - 1][0][0]
-        return ret
-
-    def show_batch(self, img_batch, class_batch):
-
-        for i in range(img_batch.shape[0]):
-            ax = plt.subplot(1, img_batch.shape[0], i + 1)
-            title_str = self.map_class(int(class_batch[i]))
-            img = np.transpose(img_batch[i, ...], (1, 2, 0))
-            ax.imshow(img)
-            ax.set_title(title_str.__str__(), {'fontsize': 5})
-            plt.tight_layout()
-
-def make_dataset(dir, image_ids, targets):
-    assert(len(image_ids) == len(targets))
-    images = []
-    dir = os.path.expanduser(dir)
-    for i in range(len(image_ids)):
-        item = (os.path.join(dir, 'data', 'images',
-                             '%s.jpg' % image_ids[i]), targets[i])
-        images.append(item)
-    return images
-    
-def find_classes(classes_file):
-    # read classes file, separating out image IDs and class names
-    image_ids = []
-    targets = []
-    f = open(classes_file, 'r')
-    for line in f:
-        split_line = line.split(' ')
-        image_ids.append(split_line[0])
-        targets.append(' '.join(split_line[1:]))
-    f.close()
-
-    # index class names
-    classes = np.unique(targets)
-    class_to_idx = {classes[i]: i for i in range(len(classes))}
-    targets = [class_to_idx[c] for c in targets]
-
-    return (image_ids, targets, classes, class_to_idx)
-
-# class dogs(Dataset):
-#     """`Stanford Dogs <http://vision.stanford.edu/aditya86/ImageNetDogs/>`_ Dataset.
-#     Args:
-#         root (string): Root directory of dataset where directory
-#             ``omniglot-py`` exists.
-#         cropped (bool, optional): If true, the images will be cropped into the bounding box specified
-#             in the annotations
-#         transform (callable, optional): A function/transform that  takes in an PIL image
-#             and returns a transformed version. E.g, ``transforms.RandomCrop``
-#         target_transform (callable, optional): A function/transform that takes in the
-#             target and transforms it.
-#         download (bool, optional): If true, downloads the dataset tar files from the internet and
-#             puts it in root directory. If the tar files are already downloaded, they are not
-#             downloaded again.
-#     """
-#     folder = 'dog'
-#     download_url_prefix = 'http://vision.stanford.edu/aditya86/ImageNetDogs'
-
-#     def __init__(self,
-#                  root,
-#                  train=True,
-#                  cropped=False,
-#                  transform=None,
-#                  target_transform=None,
-#                  download=False):
-
-#         # self.root = join(os.path.expanduser(root), self.folder)
-#         self.root = root
-#         self.train = train
-#         self.cropped = cropped
-#         self.transform = transform
-#         self.target_transform = target_transform
-
-#         if download:
-#             self.download()
-
-#         split = self.load_split()
-
-#         self.images_folder = join(self.root, 'Images')
-#         self.annotations_folder = join(self.root, 'Annotation')
-#         self._breeds = list_dir(self.images_folder)
-
-#         if self.cropped:
-#             self._breed_annotations = [[(annotation, box, idx)
-#                                         for box in self.get_boxes(join(self.annotations_folder, annotation))]
-#                                         for annotation, idx in split]
-#             self._flat_breed_annotations = sum(self._breed_annotations, [])
-
-#             self._flat_breed_images = [(annotation+'.jpg', idx) for annotation, box, idx in self._flat_breed_annotations]
-#         else:
-#             self._breed_images = [(annotation+'.jpg', idx) for annotation, idx in split]
-
-#             self._flat_breed_images = self._breed_images
-
-#         self.classes = ["Chihuaha",
-#                         "Japanese Spaniel",
-#                         "Maltese Dog",
-#                         "Pekinese",
-#                         "Shih-Tzu",
-#                         "Blenheim Spaniel",
-#                         "Papillon",
-#                         "Toy Terrier",
-#                         "Rhodesian Ridgeback",
-#                         "Afghan Hound",
-#                         "Basset Hound",
-#                         "Beagle",
-#                         "Bloodhound",
-#                         "Bluetick",
-#                         "Black-and-tan Coonhound",
-#                         "Walker Hound",
-#                         "English Foxhound",
-#                         "Redbone",
-#                         "Borzoi",
-#                         "Irish Wolfhound",
-#                         "Italian Greyhound",
-#                         "Whippet",
-#                         "Ibizian Hound",
-#                         "Norwegian Elkhound",
-#                         "Otterhound",
-#                         "Saluki",
-#                         "Scottish Deerhound",
-#                         "Weimaraner",
-#                         "Staffordshire Bullterrier",
-#                         "American Staffordshire Terrier",
-#                         "Bedlington Terrier",
-#                         "Border Terrier",
-#                         "Kerry Blue Terrier",
-#                         "Irish Terrier",
-#                         "Norfolk Terrier",
-#                         "Norwich Terrier",
-#                         "Yorkshire Terrier",
-#                         "Wirehaired Fox Terrier",
-#                         "Lakeland Terrier",
-#                         "Sealyham Terrier",
-#                         "Airedale",
-#                         "Cairn",
-#                         "Australian Terrier",
-#                         "Dandi Dinmont",
-#                         "Boston Bull",
-#                         "Miniature Schnauzer",
-#                         "Giant Schnauzer",
-#                         "Standard Schnauzer",
-#                         "Scotch Terrier",
-#                         "Tibetan Terrier",
-#                         "Silky Terrier",
-#                         "Soft-coated Wheaten Terrier",
-#                         "West Highland White Terrier",
-#                         "Lhasa",
-#                         "Flat-coated Retriever",
-#                         "Curly-coater Retriever",
-#                         "Golden Retriever",
-#                         "Labrador Retriever",
-#                         "Chesapeake Bay Retriever",
-#                         "German Short-haired Pointer",
-#                         "Vizsla",
-#                         "English Setter",
-#                         "Irish Setter",
-#                         "Gordon Setter",
-#                         "Brittany",
-#                         "Clumber",
-#                         "English Springer Spaniel",
-#                         "Welsh Springer Spaniel",
-#                         "Cocker Spaniel",
-#                         "Sussex Spaniel",
-#                         "Irish Water Spaniel",
-#                         "Kuvasz",
-#                         "Schipperke",
-#                         "Groenendael",
-#                         "Malinois",
-#                         "Briard",
-#                         "Kelpie",
-#                         "Komondor",
-#                         "Old English Sheepdog",
-#                         "Shetland Sheepdog",
-#                         "Collie",
-#                         "Border Collie",
-#                         "Bouvier des Flandres",
-#                         "Rottweiler",
-#                         "German Shepard",
-#                         "Doberman",
-#                         "Miniature Pinscher",
-#                         "Greater Swiss Mountain Dog",
-#                         "Bernese Mountain Dog",
-#                         "Appenzeller",
-#                         "EntleBucher",
-#                         "Boxer",
-#                         "Bull Mastiff",
-#                         "Tibetan Mastiff",
-#                         "French Bulldog",
-#                         "Great Dane",
-#                         "Saint Bernard",
-#                         "Eskimo Dog",
-#                         "Malamute",
-#                         "Siberian Husky",
-#                         "Affenpinscher",
-#                         "Basenji",
-#                         "Pug",
-#                         "Leonberg",
-#                         "Newfoundland",
-#                         "Great Pyrenees",
-#                         "Samoyed",
-#                         "Pomeranian",
-#                         "Chow",
-#                         "Keeshond",
-#                         "Brabancon Griffon",
-#                         "Pembroke",
-#                         "Cardigan",
-#                         "Toy Poodle",
-#                         "Miniature Poodle",
-#                         "Standard Poodle",
-#                         "Mexican Hairless",
-#                         "Dingo",
-#                         "Dhole",
-#                         "African Hunting Dog"]
-
-#     def __len__(self):
-#         return len(self._flat_breed_images)
-
-#     def __getitem__(self, index):
+#     def __init__(self, mat_anno, data_dir, car_names, cleaned=None, transform=None):
 #         """
 #         Args:
-#             index (int): Index
-#         Returns:
-#             tuple: (image, target) where target is index of the target character class.
+#             mat_anno (string): Path to the MATLAB annotation file.
+#             data_dir (string): Directory with all the images.
+#             transform (callable, optional): Optional transform to be applied
+#                 on a sample.
 #         """
-#         image_name, target_class = self._flat_breed_images[index]
-#         image_path = join(self.images_folder, image_name)
-#         image = Image.open(image_path).convert('RGB')
+#         super().__init__()
+#         self.full_data_set = io.loadmat(mat_anno)
+#         self.car_annotations = self.full_data_set['annotations']
+#         self.car_annotations = self.car_annotations[0]
 
-#         if self.cropped:
-#             image = image.crop(self._flat_breed_annotations[index][1])
+#         if cleaned is not None:
+#             cleaned_annos = []
+#             print("Cleaning up data set (only take pics with rgb chans)...")
+#             clean_files = np.loadtxt(cleaned, dtype=str)
+#             for c in self.car_annotations:
+#                 if c[-1][0] in clean_files:
+#                     cleaned_annos.append(c)
+#             self.car_annotations = cleaned_annos
 
+#         self.car_names = scipy.io.loadmat(car_names)['class_names']
+#         self.car_names = np.array(self.car_names[0])
+
+#         self.data_dir = data_dir
+#         self.transform = transform
+
+#     def __len__(self):
+#         return len(self.car_annotations)
+
+#     def __getitem__(self, idx):
+#         img_name = os.path.join(self.data_dir, self.car_annotations[idx][-1][0])
+#         image = Image.open(img_name).convert('RGB')
+#         car_class = self.car_annotations[idx][-2][0][0]
+#         # car_class = torch.from_numpy(np.array(car_class.astype(np.float32))).long() - 1
+#         car_class = jittor.array(np.array(car_class.astype(np.float32))).long() - 1
+#         assert car_class < 196
+        
 #         if self.transform:
 #             image = self.transform(image)
 
-#         if self.target_transform:
-#             target_class = self.target_transform(target_class)
+#         # return image, car_class, img_name
+#         return image, car_class
 
-#         return image, target_class
+#     def map_class(self, id):
+#         id = np.ravel(id)
+#         ret = self.car_names[id - 1][0][0]
+#         return ret
 
-#     def download(self):
-#         import tarfile
+#     def show_batch(self, img_batch, class_batch):
 
-#         if os.path.exists(join(self.root, 'Images')) and os.path.exists(join(self.root, 'Annotation')):
-#             if len(os.listdir(join(self.root, 'Images'))) == len(os.listdir(join(self.root, 'Annotation'))) == 120:
-#                 print('Files already downloaded and verified')
-#                 return
+#         for i in range(img_batch.shape[0]):
+#             ax = plt.subplot(1, img_batch.shape[0], i + 1)
+#             title_str = self.map_class(int(class_batch[i]))
+#             img = np.transpose(img_batch[i, ...], (1, 2, 0))
+#             ax.imshow(img)
+#             ax.set_title(title_str.__str__(), {'fontsize': 5})
+#             plt.tight_layout()
 
-#         for filename in ['images', 'annotation', 'lists']:
-#             tar_filename = filename + '.tar'
-#             url = self.download_url_prefix + '/' + tar_filename
-#             download_url(url, self.root, tar_filename, None)
-#             print('Extracting downloaded file: ' + join(self.root, tar_filename))
-#             with tarfile.open(join(self.root, tar_filename), 'r') as tar_file:
-#                 tar_file.extractall(self.root)
-#             os.remove(join(self.root, tar_filename))
+# def make_dataset(dir, image_ids, targets):
+#     assert(len(image_ids) == len(targets))
+#     images = []
+#     dir = os.path.expanduser(dir)
+#     for i in range(len(image_ids)):
+#         item = (os.path.join(dir, 'data', 'images',
+#                              '%s.jpg' % image_ids[i]), targets[i])
+#         images.append(item)
+#     return images
+    
+# def find_classes(classes_file):
+#     # read classes file, separating out image IDs and class names
+#     image_ids = []
+#     targets = []
+#     f = open(classes_file, 'r')
+#     for line in f:
+#         split_line = line.split(' ')
+#         image_ids.append(split_line[0])
+#         targets.append(' '.join(split_line[1:]))
+#     f.close()
 
-#     @staticmethod
-#     def get_boxes(path):
-#         import xml.etree.ElementTree
-#         e = xml.etree.ElementTree.parse(path).getroot()
-#         boxes = []
-#         for objs in e.iter('object'):
-#             boxes.append([int(objs.find('bndbox').find('xmin').text),
-#                           int(objs.find('bndbox').find('ymin').text),
-#                           int(objs.find('bndbox').find('xmax').text),
-#                           int(objs.find('bndbox').find('ymax').text)])
-#         return boxes
+#     # index class names
+#     classes = np.unique(targets)
+#     class_to_idx = {classes[i]: i for i in range(len(classes))}
+#     targets = [class_to_idx[c] for c in targets]
 
-#     def load_split(self):
-#         if self.train:
-#             split = scipy.io.loadmat(join(self.root, 'train_list.mat'))['annotation_list']
-#             labels = scipy.io.loadmat(join(self.root, 'train_list.mat'))['labels']
-#         else:
-#             split = scipy.io.loadmat(join(self.root, 'test_list.mat'))['annotation_list']
-#             labels = scipy.io.loadmat(join(self.root, 'test_list.mat'))['labels']
+#     return (image_ids, targets, classes, class_to_idx)
 
-#         split = [item[0][0] for item in split]
-#         labels = [item[0]-1 for item in labels]
-#         return list(zip(split, labels))
+class dogs(dataset.Dataset):
+    """`Stanford Dogs <http://vision.stanford.edu/aditya86/ImageNetDogs/>`_ Dataset.
+    Args:
+        root (string): Root directory of dataset where directory
+            ``omniglot-py`` exists.
+        cropped (bool, optional): If true, the images will be cropped into the bounding box specified
+            in the annotations
+        transform (callable, optional): A function/transform that  takes in an PIL image
+            and returns a transformed version. E.g, ``transforms.RandomCrop``
+        target_transform (callable, optional): A function/transform that takes in the
+            target and transforms it.
+        download (bool, optional): If true, downloads the dataset tar files from the internet and
+            puts it in root directory. If the tar files are already downloaded, they are not
+            downloaded again.
+    """
+    folder = 'dog'
+    download_url_prefix = 'http://vision.stanford.edu/aditya86/ImageNetDogs'
 
-#     def stats(self):
-#         counts = {}
-#         for index in range(len(self._flat_breed_images)):
-#             image_name, target_class = self._flat_breed_images[index]
-#             if target_class not in counts.keys():
-#                 counts[target_class] = 1
-#             else:
-#                 counts[target_class] += 1
+    def __init__(self,
+                 root,
+                 train=True,
+                 cropped=False,
+                 transform=None,
+                 target_transform=None,
+                 download=False):
 
-#         print("%d samples spanning %d classes (avg %f per class)"%(len(self._flat_breed_images), len(counts.keys()), float(len(self._flat_breed_images))/float(len(counts.keys()))))
+        # self.root = join(os.path.expanduser(root), self.folder)
+        super().__init__()
+        self.root = root
+        self.train = train
+        self.cropped = cropped
+        self.transform = transform
+        self.target_transform = target_transform
 
-#         return counts
+        if download:
+            self.download()
+
+        split = self.load_split()
+
+        self.images_folder = join(self.root, 'Images')
+        self.annotations_folder = join(self.root, 'Annotation')
+        # self._breeds = list_dir(self.images_folder)
+
+        if self.cropped:
+            self._breed_annotations = [[(annotation, box, idx)
+                                        for box in self.get_boxes(join(self.annotations_folder, annotation))]
+                                        for annotation, idx in split]
+            self._flat_breed_annotations = sum(self._breed_annotations, [])
+
+            self._flat_breed_images = [(annotation+'.jpg', idx) for annotation, box, idx in self._flat_breed_annotations]
+        else:
+            self._breed_images = [(annotation+'.jpg', idx) for annotation, idx in split]
+
+            self._flat_breed_images = self._breed_images
+
+        self.classes = ["Chihuaha",
+                        "Japanese Spaniel",
+                        "Maltese Dog",
+                        "Pekinese",
+                        "Shih-Tzu",
+                        "Blenheim Spaniel",
+                        "Papillon",
+                        "Toy Terrier",
+                        "Rhodesian Ridgeback",
+                        "Afghan Hound",
+                        "Basset Hound",
+                        "Beagle",
+                        "Bloodhound",
+                        "Bluetick",
+                        "Black-and-tan Coonhound",
+                        "Walker Hound",
+                        "English Foxhound",
+                        "Redbone",
+                        "Borzoi",
+                        "Irish Wolfhound",
+                        "Italian Greyhound",
+                        "Whippet",
+                        "Ibizian Hound",
+                        "Norwegian Elkhound",
+                        "Otterhound",
+                        "Saluki",
+                        "Scottish Deerhound",
+                        "Weimaraner",
+                        "Staffordshire Bullterrier",
+                        "American Staffordshire Terrier",
+                        "Bedlington Terrier",
+                        "Border Terrier",
+                        "Kerry Blue Terrier",
+                        "Irish Terrier",
+                        "Norfolk Terrier",
+                        "Norwich Terrier",
+                        "Yorkshire Terrier",
+                        "Wirehaired Fox Terrier",
+                        "Lakeland Terrier",
+                        "Sealyham Terrier",
+                        "Airedale",
+                        "Cairn",
+                        "Australian Terrier",
+                        "Dandi Dinmont",
+                        "Boston Bull",
+                        "Miniature Schnauzer",
+                        "Giant Schnauzer",
+                        "Standard Schnauzer",
+                        "Scotch Terrier",
+                        "Tibetan Terrier",
+                        "Silky Terrier",
+                        "Soft-coated Wheaten Terrier",
+                        "West Highland White Terrier",
+                        "Lhasa",
+                        "Flat-coated Retriever",
+                        "Curly-coater Retriever",
+                        "Golden Retriever",
+                        "Labrador Retriever",
+                        "Chesapeake Bay Retriever",
+                        "German Short-haired Pointer",
+                        "Vizsla",
+                        "English Setter",
+                        "Irish Setter",
+                        "Gordon Setter",
+                        "Brittany",
+                        "Clumber",
+                        "English Springer Spaniel",
+                        "Welsh Springer Spaniel",
+                        "Cocker Spaniel",
+                        "Sussex Spaniel",
+                        "Irish Water Spaniel",
+                        "Kuvasz",
+                        "Schipperke",
+                        "Groenendael",
+                        "Malinois",
+                        "Briard",
+                        "Kelpie",
+                        "Komondor",
+                        "Old English Sheepdog",
+                        "Shetland Sheepdog",
+                        "Collie",
+                        "Border Collie",
+                        "Bouvier des Flandres",
+                        "Rottweiler",
+                        "German Shepard",
+                        "Doberman",
+                        "Miniature Pinscher",
+                        "Greater Swiss Mountain Dog",
+                        "Bernese Mountain Dog",
+                        "Appenzeller",
+                        "EntleBucher",
+                        "Boxer",
+                        "Bull Mastiff",
+                        "Tibetan Mastiff",
+                        "French Bulldog",
+                        "Great Dane",
+                        "Saint Bernard",
+                        "Eskimo Dog",
+                        "Malamute",
+                        "Siberian Husky",
+                        "Affenpinscher",
+                        "Basenji",
+                        "Pug",
+                        "Leonberg",
+                        "Newfoundland",
+                        "Great Pyrenees",
+                        "Samoyed",
+                        "Pomeranian",
+                        "Chow",
+                        "Keeshond",
+                        "Brabancon Griffon",
+                        "Pembroke",
+                        "Cardigan",
+                        "Toy Poodle",
+                        "Miniature Poodle",
+                        "Standard Poodle",
+                        "Mexican Hairless",
+                        "Dingo",
+                        "Dhole",
+                        "African Hunting Dog"]
+
+    def __len__(self):
+        return len(self._flat_breed_images)
+
+    def __getitem__(self, index):
+        """
+        Args:
+            index (int): Index
+        Returns:
+            tuple: (image, target) where target is index of the target character class.
+        """
+        image_name, target_class = self._flat_breed_images[index]
+        image_path = join(self.images_folder, image_name)
+        image = Image.open(image_path).convert('RGB')
+
+        if self.cropped:
+            image = image.crop(self._flat_breed_annotations[index][1])
+
+        if self.transform:
+            image = self.transform(image)
+
+        if self.target_transform:
+            target_class = self.target_transform(target_class)
+
+        return image, target_class
+
+    def download(self):
+        import tarfile
+
+        if os.path.exists(join(self.root, 'Images')) and os.path.exists(join(self.root, 'Annotation')):
+            if len(os.listdir(join(self.root, 'Images'))) == len(os.listdir(join(self.root, 'Annotation'))) == 120:
+                print('Files already downloaded and verified')
+                return
+
+        for filename in ['images', 'annotation', 'lists']:
+            tar_filename = filename + '.tar'
+            url = self.download_url_prefix + '/' + tar_filename
+            download_url(url, self.root, tar_filename, None)
+            print('Extracting downloaded file: ' + join(self.root, tar_filename))
+            with tarfile.open(join(self.root, tar_filename), 'r') as tar_file:
+                tar_file.extractall(self.root)
+            os.remove(join(self.root, tar_filename))
+
+    @staticmethod
+    def get_boxes(path):
+        import xml.etree.ElementTree
+        e = xml.etree.ElementTree.parse(path).getroot()
+        boxes = []
+        for objs in e.iter('object'):
+            boxes.append([int(objs.find('bndbox').find('xmin').text),
+                          int(objs.find('bndbox').find('ymin').text),
+                          int(objs.find('bndbox').find('xmax').text),
+                          int(objs.find('bndbox').find('ymax').text)])
+        return boxes
+
+    def load_split(self):
+        if self.train:
+            split = scipy.io.loadmat(join(self.root, 'train_list.mat'))['annotation_list']
+            labels = scipy.io.loadmat(join(self.root, 'train_list.mat'))['labels']
+        else:
+            split = scipy.io.loadmat(join(self.root, 'test_list.mat'))['annotation_list']
+            labels = scipy.io.loadmat(join(self.root, 'test_list.mat'))['labels']
+
+        split = [item[0][0] for item in split]
+        labels = [item[0]-1 for item in labels]
+        return list(zip(split, labels))
+
+    def stats(self):
+        counts = {}
+        for index in range(len(self._flat_breed_images)):
+            image_name, target_class = self._flat_breed_images[index]
+            if target_class not in counts.keys():
+                counts[target_class] = 1
+            else:
+                counts[target_class] += 1
+
+        print("%d samples spanning %d classes (avg %f per class)"%(len(self._flat_breed_images), len(counts.keys()), float(len(self._flat_breed_images))/float(len(counts.keys()))))
+
+        return counts
 
 # class NABirds(Dataset):
 #     """`NABirds <https://dl.allaboutbirds.org/nabirds>`_ Dataset.

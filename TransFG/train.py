@@ -157,7 +157,7 @@ def valid(args, model, test_loader, global_step):
                 all_preds[0], preds.detach().cpu().numpy(), axis=0
             )
             all_label[0] = np.append(
-                all_label[0], y.detach().cpu().numpy(), axis=0
+                all_label[0], y.detach().cpu().numpy().ravel(), axis=0
             )
         epoch_iterator.set_description("Validating... (loss=%2.5f)" % eval_losses.val)
 

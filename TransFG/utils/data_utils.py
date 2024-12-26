@@ -9,7 +9,7 @@ from jittor import transform as transforms
 # from torch.utils.data import DataLoader, RandomSampler, DistributedSampler, SequentialSampler
 from jittor.dataset import DataLoader, RandomSampler, SequentialSampler
 
-from .dataset import CUB, CarsDataset
+from .dataset import CUB, dogs
 from .autoaugment import AutoAugImageNetPolicy
 
 logger = logging.getLogger(__name__)
